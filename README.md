@@ -7,18 +7,23 @@ Este proyecto descarga automáticamente, todos los días, los precios actualizad
 ## 🧱 Estructura del proyecto
 
 carburantes/
+
 ├── app/
 
 │ ├── main.py # Script de descarga y guardado de datos
 
 │ └── requirements.txt # Dependencias de Python
+
 │
+
 ├── postgres/
 
 │ ├── postgresql.conf # Configuración para exponer PostgreSQL a red
 
 │ └── pg_hba.conf # Reglas de acceso externo
+
 │
+
 ├── Dockerfile # Contenedor extractor (Python + cron)
 
 ├── crontab.txt # Tarea cron diaria
