@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:15
+    container_name: carburantes_db
+    environment:
+      POSTGRES_DB: carburantes
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf
+    command: >
+      postgres -c config_file=/etc/postgresql/postgresql.conf
+               -c hba_file=/etc/postgresql/pg_hba.conf
+    ports:
+      - "5432:5432"
+    networks:
+      - net
+
+  extractor:
+    build: .
+    container_name: carburantes_extractor
+    environment:
+      POSTGRES_DB: carburantes
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST: db
+    depends_on:
+      - db
+    networks:
+      - net
+
+volumes:
+  db_data:
+
+networks:
+  net:
+
