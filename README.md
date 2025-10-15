@@ -1,123 +1,114 @@
-# ⛽ Proyecto: Importador Diario de Precios de Carburantes
+# Proyecto: Carburantes - Descarga diaria desde API a PostgreSQL con Docker
 
-Este proyecto descarga automáticamente, todos los días, los precios actualizados de las estaciones de servicio terrestres en España desde la API oficial del Ministerio para la Transición Ecológica. Los datos se almacenan en una base de datos PostgreSQL utilizando contenedores Docker y una tarea cron.
+Este proyecto descarga automáticamente cada día los datos de precios de carburantes en España desde la API oficial del Ministerio, y los guarda en una base de datos PostgreSQL dentro de Docker.
 
 ---
 
-## 🧱 Estructura del proyecto
+## 🚀 Tecnologías utilizadas
 
+- Python 3.11
+- Docker + Docker Compose
+- PostgreSQL
+- Cron (dentro de contenedor)
+- SQLAlchemy + Pandas
+
+---
+
+## 📦 Estructura del proyecto
+
+```
 carburantes/
-
 ├── app/
-
-│ ├── main.py # Script de descarga y guardado de datos
-
-│ └── requirements.txt # Dependencias de Python
-
-│
-
+│   ├── main.py              # Script principal de descarga
+│   └── requirements.txt     # Dependencias Python
 ├── postgres/
-
-│ ├── postgresql.conf # Configuración para exponer PostgreSQL a red
-
-│ └── pg_hba.conf # Reglas de acceso externo
-
-│
-
-├── Dockerfile # Contenedor extractor (Python + cron)
-
-├── crontab.txt # Tarea cron diaria
-
-└── docker-compose.yml # Orquestación de servicios
-
-
+│   ├── postgresql.conf      # Configuración opcional PostgreSQL
+│   └── pg_hba.conf
+├── crontab.txt              # Tarea programada diaria (cron)
+├── Dockerfile               # Contenedor extractor
+├── docker-compose.yml       # Orquesta servicios
+├── .env                     # Variables de entorno
+└── README.md
+```
 
 ---
 
-## 🚀 Cómo ejecutar
+## ⚙️ Variables de entorno (.env)
 
-### 1. Construir e iniciar los contenedores
+```
+POSTGRES_DB=carburantes
+POSTGRES_USER=user
+POSTGRES_PASSWORD=password
+POSTGRES_HOST=db
+```
 
+---
+
+## 🛠 Instalación y uso
+
+1. Clona el repositorio:
+
+```bash
+git clone https://github.com/JLalib/sql-carburantes_eess.git
+cd carburantes
+```
+
+2. Ajusta `.env` si es necesario
+
+3. Ejecuta todo con Docker Compose:
+
+```bash
 docker-compose up -d --build
-Esto iniciará:
+```
 
-carburantes_db: base de datos PostgreSQL expuesta en el puerto 5432
+Esto crea:
+- PostgreSQL (`carburantes_db`) con persistencia
+- Contenedor Python (`carburantes_extractor`) que ejecuta `main.py` diariamente (07:00 AM)
 
-carburantes_extractor: contenedor con cron y main.py
+4. Ejecuta manualmente (opcional):
 
-### 2. Ejecutar una descarga manual (opcional)
-
+```bash
 docker exec -it carburantes_extractor python3 /app/main.py
+```
 
-### 3. Verificar datos insertados
+5. Verifica los datos:
 
-docker exec -it carburantes_db psql -h 127.0.0.1 -U user -d carburantes
+```bash
+docker exec -it carburantes_db psql -U user -d carburantes
+```
 
-Dentro de psql:
-
+```sql
 SELECT COUNT(*) FROM precios_carburantes;
-
 SELECT DISTINCT fecha_descarga FROM precios_carburantes ORDER BY fecha_descarga DESC;
+```
 
-🔌 Conexión desde herramientas BI
+---
 
-Desde otro equipo en la red (Power BI, Tableau, etc.), utiliza los siguientes parámetros:
+## 🔁 Automatización diaria
 
-Host	IP del servidor Docker (ej: 192.168.1.100)
+La descarga diaria está programada por `cron` en el contenedor extractor. El resultado se guarda en `/var/log/cron.log` dentro del contenedor.
 
-Puerto	5432
+```bash
+docker exec -it carburantes_extractor cat /var/log/cron.log
+```
 
-Base de datos: carburantes
+---
 
-Usuario	user
+## 🛡 Protección contra duplicados
 
-Contraseña	password
+Antes de insertar, el script verifica si ya existen datos con la `fecha_descarga` actual.
 
-🔧 Asegúrate de que:
+---
 
-docker-compose.yml expone el puerto 5432
+## 📈 Ideas para expansión
 
-postgresql.conf contiene: listen_addresses = '*'
+- API de consulta (FastAPI)
+- Dashboard visual (Streamlit, Dash)
+- Exportación a CSV/Excel
+- Conexión a Power BI / Grafana
 
-pg_hba.conf permite conexiones externas: host all all 0.0.0.0/0 md5
+---
 
-🗓 Configuración de Cron
+## 🧑 Autor
 
-El archivo crontab.txt define la ejecución diaria del script a las 7:00 AM:
-
-cron
-
-0 7 * * * python3 /app/main.py >> /var/log/cron.log 2>&1
-Puedes ajustar la hora si lo deseas. Después de cambiarlo, ejecuta:
-
-docker-compose up -d --build
-
-🛡 Recomendaciones
-
-Cambia las credenciales predeterminadas de la base de datos antes de usarlo en producción.
-
-Agrega lógica para evitar duplicados por fecha_descarga, si ejecutas múltiples veces al día.
-
-Protege el acceso remoto con firewall o red VPN si estás fuera de una red local.
-
-📊 Integraciones posibles
-
-✅ Power BI
-
-✅ Tableau
-
-✅ Metabase (puedes agregarlo en Docker)
-
-✅ pgAdmin
-
-📄 Fuente de datos
-
-Ministerio para la Transición Ecológica de España
-
-API pública: https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/
-
-🔧 Mantenimiento
-
-Los datos se descargan automáticamente una vez al día.
-
-Se acumulan en la tabla precios_carburantes con la fecha correspondiente.
+Desarrollado por Genbyte · Octubre 2025
