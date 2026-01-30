@@ -1,2 +1,5 @@
 #Ruta Absoluta de Pyhton app log 
-0 7 * * * /usr/local/bin/python3 /app/main.py >> /var/log/cron.log 2>&1
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+45 05 * * * /usr/local/bin/python3 /app/main.py >> /var/log/cron.log 2>&1
